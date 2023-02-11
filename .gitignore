@@ -1,0 +1,11 @@
+/build/
+
+# credit https://github.com/storborg/python-packaging/blob/35daf9938a63f7deb4b25cb1c5c65578c73f28e4/minimal.rst
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
