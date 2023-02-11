@@ -1,3 +1,1 @@
-to imeplement:
--harclik calculation for eomonth, =(EOMONTH(TODAY(),0)-TODAY())*15
--daily<-flex
+a simple script to ditch gsheets for budgeting
