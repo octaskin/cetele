@@ -7,14 +7,11 @@ from pathlib import Path
 config_file = Path.home().joinpath(".config/cetele/config.json")
 if config_file.exists():
     with open(config_file, "r", encoding="utf-8") as file:
-        data_dir = json.load(file)["data_dir"]
+        state_file_path = json.load(file)["state_file_path"]
 else:
-    exit("Please define a data directory on the configuration file.")
+    exit("Please define a path on the configuration file.")
 
-data_path = Path.home().joinpath(data_dir)
-# order_file = data_path.joinpath("shoppy_order.txt")
-# store_file = data_path.joinpath("store-layout.txt")
-# list_file = data_path.joinpath("shoppy_list.md")
+data_path = Path.home().joinpath(state_file_path)
 
 
 def last_day_of_month(any_day):
@@ -32,7 +29,7 @@ def leftover_spenditure():
 
 
 def read_the_state():
-    with open(data_path.joinpath("state.csv"), "r") as file:
+    with open(data_path, "r") as file:
         content = [r for r in reader(file, delimiter=",")]
 
     state = {}
