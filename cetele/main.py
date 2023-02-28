@@ -28,6 +28,14 @@ def leftover_spenditure():
     return days_left.days * 15.00
 
 
+def row_is_numeric(row: list[str]) -> bool:
+    try:
+        float(row[1])
+        return True
+    except:
+        return False
+
+
 def read_the_state():
     with open(data_path, "r") as file:
         content = [r for r in reader(file, delimiter=",")]
@@ -35,9 +43,9 @@ def read_the_state():
     state = {}
     for line in content:
         k = line[0]
-        try:
+        if row_is_numeric(line):
             state[k] = float(line[1])
-        except:
+        else:
             state[k] = line[1:]
         logging.debug(f"{k}->{state[k]}")
 
@@ -101,3 +109,17 @@ def display_the_cetele(state: dict):
     print("-" * 45)
     print(f"| {'overall':<8} | {'':<8} | {'':<8} | {overall:>8.2f} |")
     print("-" * 45)
+
+
+def edit_state():
+    # Offer to edit the state
+    # EDIT
+    # Print the current value of the entry
+    # Let the user change that value
+    # DELETION
+    # Search it by string "entry,"
+    # Hit the matches and print for debuggin
+    # If the second entry is a numerical, then delete the row
+    # If not, then it is a child of another, then remove that child
+    ## Save to disk
+    pass
