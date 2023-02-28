@@ -11,7 +11,7 @@ if config_file.exists():
 else:
     exit("Please define a path on the configuration file.")
 
-data_path = Path.home().joinpath(state_file_path)
+file_path = Path.home().joinpath(state_file_path)
 
 
 def last_day_of_month(any_day):
@@ -36,10 +36,66 @@ def row_is_numeric(row: list[str]) -> bool:
         return False
 
 
-def read_the_state():
-    with open(data_path, "r") as file:
-        content = [r for r in reader(file, delimiter=",")]
+def read_state_file() -> list:
+    with open(file_path, "r") as file:
+        out = [r for r in reader(file, delimiter=",")]
+    return out
 
+
+def write_state_file(state: list):
+    res = ""
+    for row in state:
+        res += ",".join(row) + "\n"
+
+    with open(file_path.with_stem("new"), "w") as file:
+        file.write(res)
+
+
+def display_state_file(state: list):
+    for i, row in enumerate(state):
+        print(f"{i}: {','.join(row)}")
+
+
+def edit_state_file():
+    action = input(f"You want to [E]dit or [D]elete an entry, Q[uit]?: ")
+    match action.capitalize():
+        case "E":
+            current = read_state_file()
+            logging.debug("I see that you want to edit.")
+            logging.debug("Here is the list...")
+            display_state_file(current)
+            idx = int(input("Which entry you want to work on?: "))
+            print(f"Editing: {','.join(current[idx])}")
+            if len(current[idx][1:]) > 1:
+                exit("This is a parent enrty, editing this is not implemented yet...")
+            else:
+                current[idx][1] = f"{float(input()):.2f}"
+                print(f"New value: {','.join(current[idx])}")
+            write_state_file(current)
+        case "D":
+            current = read_state_file()
+            logging.debug("I see that you want to edit.")
+            logging.debug("Here is the list...")
+            display_state_file(current)
+            idx = int(input("Which entry you want to work on?: "))
+            key = current[idx][0]
+            print(f"Deleting: {','.join(current[idx])}")
+            del current[idx]
+            for i, row in enumerate(current):
+                if len(row) > 2 and key in row:
+                    print(f"Found parent {current[i]}")
+                    current[i].remove(key)
+                    print(f"New row {current[i]}")
+            write_state_file(current)
+        case "Q":
+            exit("bye")
+        case _:
+            exit("Unexpected argument!")
+
+    pass
+
+
+def form_state(content: list) -> dict:
     state = {}
     for line in content:
         k = line[0]
@@ -109,17 +165,3 @@ def display_the_cetele(state: dict):
     print("-" * 45)
     print(f"| {'overall':<8} | {'':<8} | {'':<8} | {overall:>8.2f} |")
     print("-" * 45)
-
-
-def edit_state():
-    # Offer to edit the state
-    # EDIT
-    # Print the current value of the entry
-    # Let the user change that value
-    # DELETION
-    # Search it by string "entry,"
-    # Hit the matches and print for debuggin
-    # If the second entry is a numerical, then delete the row
-    # If not, then it is a child of another, then remove that child
-    ## Save to disk
-    pass
