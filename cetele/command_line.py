@@ -15,14 +15,13 @@ def main():
         state = form_state(read_state_file())
         display_the_cetele(state)
     else:
+        if "--debug" in sys.argv:
+            logging.basicConfig(level=logging.DEBUG)
+            sys.argv.remove("--debug")
         match sys.argv[1]:
-            case "--debug":
-                sys.argv = [sys.argv[0]]
-                logging.basicConfig(level=logging.DEBUG)
-                main()
-            case "--edit":
+            case "edit":
                 edit_state_file()
-            case "--list":
+            case "list":
                 display_state_file(read_state_file())
             case _:
                 exit("Unexpected argument!")

@@ -37,6 +37,7 @@ def row_is_numeric(row: list[str]) -> bool:
 
 
 def read_state_file() -> list:
+    logging.debug("Reading the state file.")
     with open(file_path, "r") as file:
         out = [r for r in reader(file, delimiter=",")]
     return out
@@ -47,11 +48,12 @@ def write_state_file(state: list):
     for row in state:
         res += ",".join(row) + "\n"
 
-    with open(file_path.with_stem("new"), "w") as file:
+    with open(file_path, "w") as file:
         file.write(res)
 
 
 def display_state_file(state: list):
+    logging.debug("Listing the state file.")
     for i, row in enumerate(state):
         print(f"{i}: {','.join(row)}")
 
@@ -79,14 +81,16 @@ def edit_state_file():
             display_state_file(current)
             idx = int(input("Which entry you want to work on?: "))
             key = current[idx][0]
-            print(f"Deleting: {','.join(current[idx])}")
-            del current[idx]
-            for i, row in enumerate(current):
-                if len(row) > 2 and key in row:
-                    print(f"Found parent {current[i]}")
-                    current[i].remove(key)
-                    print(f"New row {current[i]}")
-            write_state_file(current)
+            if input(f"Deleting: {','.join(current[idx])} [y\\n]") == "y":
+                del current[idx]
+                for i, row in enumerate(current):
+                    if len(row) > 2 and key in row:
+                        print(f"Found parent {current[i]}")
+                        current[i].remove(key)
+                        print(f"New row {current[i]}")
+                write_state_file(current)
+            else:
+                exit("Aborted.")
         case "Q":
             exit("bye")
         case _:
