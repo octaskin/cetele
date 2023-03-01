@@ -85,9 +85,8 @@ def edit_state_file():
                 del current[idx]
                 for i, row in enumerate(current):
                     if len(row) > 2 and key in row:
-                        print(f"Found parent {current[i]}")
+                        logging.debug(f"Removing child from parent {current[i][0]}")
                         current[i].remove(key)
-                        print(f"New row {current[i]}")
                 write_state_file(current)
             else:
                 exit("Aborted.")
