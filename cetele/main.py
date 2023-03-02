@@ -14,6 +14,7 @@ class State:
         self.content = self.read()
 
     def read_config(self) -> Path:
+        logging.debug("Reading config file.")
         config_file = Path.home().joinpath(".config/cetele/config.json")
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
@@ -23,12 +24,13 @@ class State:
         return Path.home().joinpath(state_file_path)
 
     def read(self) -> list:
-        logging.debug("Reading the state file.")
+        logging.debug("Reading state file.")
         with open(self.fpath, "r") as file:
             out = [r for r in reader(file, delimiter=",")]
         return out
 
     def write(self):
+        logging.debug("Writing to state file.")
         res = ""
         for row in self.content:
             res += ",".join(row) + "\n"
@@ -36,11 +38,12 @@ class State:
             file.write(res)
 
     def edit(self):
+        logging.debug("Editing state file.")
         print(self)
         action = self.edit_actions.get(input(self.edit_prompt).capitalize(), None)
         if not action:
             exit("Unexpected argument!")
-        elif action == "Q":
+        elif action == "quit":
             exit("bye...")
         logging.debug(f"You chose {action}.")
         idx = int(input(f"Which entry you want to {action}: "))
@@ -68,6 +71,7 @@ class State:
         self.write()
 
     def verify(self):
+        logging.debug("Verifying state file.")
         # Currently unused
         for i, row in enumerate(self.content):
             if self.row_is_child(row):
@@ -102,6 +106,7 @@ class Cetele:
 
     @staticmethod
     def form_state(content: list) -> dict:
+        logging.debug("Forming state dictionary.")
         res = {}
         for line in content:
             k = line[0]
