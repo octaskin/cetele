@@ -89,7 +89,6 @@ class State:
             return False
 
     def __str__(self):
-        # TODO: test this, I'm not sure to print or return string
         logging.debug("Listing the state file.")
         res = ""
         for i, row in enumerate(self.content):
@@ -145,6 +144,7 @@ class Cetele:
             self.vals[k] = sum
             v = sum
 
+        # if it is in TRY, convert to EUR before returning
         if k[-5:] == "[try]":
             v /= self.vals["EUR2TRY"]
 
@@ -152,11 +152,13 @@ class Cetele:
         return v
 
     def __str__(self) -> str:
+        logging.debug("Printing the cetele table")
         cols = ["cetele", "savings", "flex", "dailies"]
         idx = ["status", "goal", "net"]
 
         table = []
         for c in cols:
+            logging.debug(f"Forming the {c} column")
             col = []
             if c == "cetele":
                 col.append(c)
