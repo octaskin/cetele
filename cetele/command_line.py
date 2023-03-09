@@ -24,5 +24,7 @@ def main():
             state.edit()
         case "list":
             print(state)
+        case "verify":
+            state.verify()
         case _:
             exit("Unexpected argument!")

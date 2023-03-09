@@ -71,6 +71,7 @@ class State:
         self.write()
 
     def verify(self):
+        flag = True
         logging.debug("Verifying state file.")
         # Currently unused
         for i, row in enumerate(self.content):
@@ -79,6 +80,10 @@ class State:
                 whole = " ".join([" ".join(r) for r in rest])
                 if row[0] not in whole + " EUR2TRY":  # currency is an exception
                     print(f"{row[0]} is an orphan, please review or remove!")
+                    flag = False
+        if flag:
+            print("No problems have been encountered!")
+        logging.debug("Verification done.")
 
     @staticmethod
     def row_is_child(row: list[str]) -> bool:
