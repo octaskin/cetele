@@ -7,6 +7,7 @@ from pathlib import Path
 
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
+    # TODO: update these to the new features that are added
     edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
 
     def __init__(self):
@@ -37,7 +38,28 @@ class State:
         with open(self.fpath, "w") as file:
             file.write(res)
 
-    def edit(self):
+    def edit(self, idx):
+        idx = int(idx)
+        print(f"Editing: {','.join(self.content[idx])}")
+        if len(self.content[idx][1:]) > 1:
+            exit("This is a parent enrty, editing this is not implemented yet...")
+        else:
+            self.content[idx][1] = f"{float(input()):.2f}"
+            print(f"New value: {','.join(self.content[idx])}")
+        self.write()
+
+    def delete(self, idx):
+        idx = int(idx)
+        if input(f"Deleting: {','.join(self.content[idx])} [y\\n]") == "y":
+            del self.content[idx]
+            for i, row in enumerate(self.content):
+                if len(row) > 2 and self.content[idx][0] in row:
+                    logging.debug(f"Removing child from parent {self.content[i][0]}")
+                    self.content[i].remove(self.content[idx][0])
+        else:
+            exit("Aborted.")
+
+    def interactive(self):
         logging.debug("Editing state file.")
         print(self)
         action = self.edit_actions.get(input(self.edit_prompt).capitalize(), None)
@@ -46,28 +68,12 @@ class State:
         elif action == "quit":
             exit("bye...")
         logging.debug(f"You chose {action}.")
-        idx = int(input(f"Which entry you want to {action}: "))
-        print(f"{action}ing: {','.join(self.content[idx])}")
         match action:
-            case "edit":
-                if len(self.content[idx][1:]) > 1:
-                    exit(
-                        "This is a parent enrty, editing this is not implemented yet..."
-                    )
-                else:
-                    self.content[idx][1] = f"{float(input()):.2f}"
-                    print(f"New value: {','.join(self.content[idx])}")
-            case "delete":
-                if input(f"Deleting: {','.join(self.content[idx])} [y\\n]") == "y":
-                    del self.content[idx]
-                    for i, row in enumerate(self.content):
-                        if len(row) > 2 and self.content[idx][0] in row:
-                            logging.debug(
-                                f"Removing child from parent {self.content[i][0]}"
-                            )
-                            self.content[i].remove(self.content[idx][0])
-                else:
-                    exit("Aborted.")
+            case "edit" | "delete":
+                idx = int(input(f"Which entry you want to {action}: "))
+                getattr(self, action)(idx)
+            case "verify":
+                self.verify()
         self.write()
 
     def verify(self):
