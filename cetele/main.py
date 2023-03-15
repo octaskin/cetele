@@ -11,18 +11,19 @@ class State:
     edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
 
     def __init__(self):
-        self.fpath = self.read_config()
+        config = self.read_config()
+        self.fpath = Path.home().joinpath(config["state_file_path"])
+        self.pocket_str = config["pocket_money_string"]
         self.content = self.read()
 
-    def read_config(self) -> Path:
+    def read_config(self) -> dict:
         logging.debug("Reading config file.")
         config_file = Path.home().joinpath(".config/cetele/config.json")
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
-                state_file_path = json.load(file)["state_file_path"]
+                return json.load(file)
         else:
             exit("Please define a path on the configuration file.")
-        return Path.home().joinpath(state_file_path)
 
     def read(self) -> list:
         logging.debug("Reading state file.")
@@ -111,14 +112,13 @@ class State:
 
 class Cetele:
     def __init__(self, state: State):
-        self.vals = self.form_state(state.content)
         self.state = state
+        self.vals = self.form_state()
 
-    @staticmethod
-    def form_state(content: list) -> dict:
+    def form_state(self) -> dict:
         logging.debug("Forming state dictionary.")
         res = {}
-        for line in content:
+        for line in self.state.content:
             k = line[0]
             if State.row_is_child(line):
                 res[k] = float(line[1])
@@ -126,7 +126,8 @@ class Cetele:
                 res[k] = line[1:]
             logging.debug(f"{k}->{res[k]}")
 
-        res["dailies-goal"] = Cetele.leftover_spenditure()
+        logging.debug(f"Calculating pocket money for entry {self.state.pocket_str}")
+        res[self.state.pocket_str] = self.leftover_pocket_money()
         return res
 
     @staticmethod
@@ -138,7 +139,7 @@ class Cetele:
         return next_month - datetime.timedelta(days=next_month.day)
 
     @staticmethod
-    def leftover_spenditure() -> float:
+    def leftover_pocket_money() -> float:
         today = datetime.date.today()
         days_left = Cetele.last_day_of_month(today) - today
         return days_left.days * 15.00
