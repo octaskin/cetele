@@ -83,11 +83,15 @@ class State:
         # Currently unused
         for i, row in enumerate(self.content):
             if self.row_is_child(row):
+                # Check whether it is an orphan
                 rest = self.content[:i] + self.content[i + 1 :]
                 whole = " ".join([" ".join(r) for r in rest])
                 if row[0] not in whole + " EUR2TRY":  # currency is an exception
                     print(f"{row[0]} is an orphan, please review or remove!")
                     flag = False
+                # Check the decimal part
+                if row[1][-3] != "." and not row[1][-2:].isnumeric():
+                    print(f"There is a problem with decimal at '{','.join(row)}'")
         if flag:
             print("No problems have been encountered!")
         logging.debug("Verification done.")
