@@ -57,6 +57,7 @@ class State:
                 if len(row) > 2 and self.content[idx][0] in row:
                     logging.debug(f"Removing child from parent {self.content[i][0]}")
                     self.content[i].remove(self.content[idx][0])
+            self.write()
         else:
             exit("Aborted.")
 
