@@ -45,7 +45,7 @@ class State:
 
     def write(self):
         logging.debug("Writing to state file.")
-        with open(self.fpath.with_stem("output"), "w") as file:
+        with open(self.fpath, "w") as file:
             json.dump(self.data, file, indent=2)
 
     def edit(self, idx):
