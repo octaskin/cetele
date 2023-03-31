@@ -39,7 +39,7 @@ class State:
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
                 self.config = json.load(file)
-            self.fpath = Path.home().joinpath(self.config["new_path"])
+            self.fpath = Path.home().joinpath(self.config["cetele_path"])
         else:
             exit("Please define a path on the configuration file.")
 
