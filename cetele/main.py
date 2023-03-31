@@ -18,6 +18,12 @@ def leftover_pocket_money() -> float:
     return days_left.days * 15.00
 
 
+# TODO: Make state a custom dict object hten we can simplify what we keep on Cetele
+# class CustomDictOne(dict):
+#    def __init__(self,*arg,**kw):
+#       super(CustomDictOne, self).__init__(*arg, **kw)
+
+
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
     # TODO: update these to the new features that are added
@@ -51,7 +57,7 @@ class State:
     def edit(self, idx):
         key = list(self.content)[int(idx)]
         print(f"Editing -> {key} : {self.content[key]:.2f}")
-        if self.is_parent(key):
+        if self.key_is_parent(key):
             exit("This is a parent enrty, editing this is not implemented yet...")
         else:
             try:
@@ -63,24 +69,18 @@ class State:
             self.write()
 
     def delete(self, idx):
-        print("Temporarily disabled for json")
-        return
-        idx = int(idx)
-        if input(f"Deleting: {','.join(self.content[idx])} [y\\n]") == "y":
-            # First check where this entry occurs as child
-            for i, row in enumerate(self.content):
-                if len(row) > 2 and self.content[idx][0] in row:
-                    print(row)
-                    logging.debug(f"Removing child from parent {self.content[i][0]}")
-                    self.content[i].remove(self.content[idx][0])
-            del self.content[idx]
-            # self.write()
+        key = list(self.content)[int(idx)]
+        if input(f"Deleting -> {key} : {self.content[key]:.2f} [y\\n]: ") == "y":
+            del self.content[key]
+            for p in self.parents():
+                if key in self.content[p]:
+                    logging.debug(f"Removing child from: {p}")
+                    self.content[p].remove(key)
+            self.write()
         else:
             exit("Aborted.")
 
     def interactive(self):
-        print("Temporarily disabled for json")
-        return
         logging.debug("Editing state file.")
         print(self)
         action = self.edit_actions.get(input(self.edit_prompt).capitalize(), None)
@@ -95,53 +95,49 @@ class State:
                 getattr(self, action)(idx)
             case "verify":
                 self.verify()
-        # self.write()
+        self.write()
 
     def verify(self):
-        print("Temporarily disabled for json")
-        return
         flag = True
         logging.debug("Verifying state file.")
-        # Currently unused
-        for i, row in enumerate(self.content):
-            if self.row_is_child(row):
-                # Check whether it is an orphan
-                rest = self.content[:i] + self.content[i + 1 :]
-                whole = " ".join([" ".join(r) for r in rest])
-                if row[0] not in whole + " EUR2TRY":  # currency is an exception
-                    print(f"{row[0]} is an orphan, please review or remove!")
-                    flag = False
-                # Check the decimal part
-                if row[1][-3] != "." and not row[1][-2:].isnumeric():
-                    print(f"There is a problem with decimal at '{','.join(row)}'")
+        all_children = [i for p in self.parents() for i in p]
+        for k in self.children():
+            if k not in all_children + ["EUR2TRY"]:  # currency is an exception
+                print(f"{k} is an orphan, please review or remove!")
+                flag = False
+
         if flag:
             print("No problems have been encountered!")
         logging.debug("Verification done.")
 
-    def is_parent(self, key) -> bool:
+    def key_is_parent(self, key) -> bool:
         return isinstance(self.content[key], list)
+
+    def parents(self) -> list:
+        if not hasattr(self, "parents_list"):
+            logging.debug("Parent list have not been cached before, caching now.")
+            self.parents_list = [k for k in self.content if self.key_is_parent(k)]
+        return self.parents_list
+
+    def children(self) -> list:
+        if not hasattr(self, "children_list"):
+            logging.debug("Children list have not been cached before, caching now.")
+            self.children_list = [k for k in self.content if not self.key_is_parent(k)]
+        return self.children_list
 
     def __str__(self):
         """Only the child items"""
         logging.debug("Listing the state file.")
         res = ""
         max_width = max(map(len, self.content))
-        for i, key in enumerate(self.content):
-            if self.is_parent(key):
-                continue
+        for i, key in enumerate(self.children()):
             res += f"|{i:>2}| {key:<{max_width}} : {self.content[key]:>8.2f}\n"
         return res[:-1]
 
 
 class Cetele:
     def __init__(self, state: State):
-        self.state = state
-        self.vals = self.form_state()
-
-    def form_state(self) -> dict:
-        logging.debug("Forming state dictionary.")
-        res = self.state.content
-        return res
+        self.vals = state.content
 
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
