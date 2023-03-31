@@ -24,8 +24,9 @@ def parse_args(args: list) -> list:
     return args
 
 
-def main():
-    args = parse_args(sys.argv)
+def main(args=sys.argv):
+    logging.debug(f"Received args {args}")
+    args = parse_args(args)
     state = State()
 
     match args[1]:
@@ -33,8 +34,12 @@ def main():
             cetele = Cetele(state)
             print(cetele)
         case "edit" | "delete":
-            assert len(args) == 3
-            getattr(state, args[1])(args[2])
+            if len(args) == 2:
+                print(f"You need to pick an entry to work on!\n{state}")
+                main(args + [input("Choice: ")])
+            else:
+                assert len(args) == 3
+                getattr(state, args[1])(args[2])
         case "interactive":
             state.interactive()
         case "list":

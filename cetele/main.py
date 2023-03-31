@@ -18,12 +18,6 @@ def leftover_pocket_money() -> float:
     return days_left.days * 15.00
 
 
-# TODO: Make state a custom dict object hten we can simplify what we keep on Cetele
-# class CustomDictOne(dict):
-#    def __init__(self,*arg,**kw):
-#       super(CustomDictOne, self).__init__(*arg, **kw)
-
-
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
     # TODO: update these to the new features that are added
@@ -46,36 +40,36 @@ class State:
     def read(self):
         logging.debug("Reading state file.")
         with open(self.fpath, "r") as file:
-            self.content = json.load(file)
-        self.content[self.config["pocket_money_str"]] = leftover_pocket_money()
+            self.data = json.load(file)
+        self.data[self.config["pocket_money_str"]] = leftover_pocket_money()
 
     def write(self):
         logging.debug("Writing to state file.")
         with open(self.fpath.with_stem("output"), "w") as file:
-            json.dump(self.content, file, indent=2)
+            json.dump(self.data, file, indent=2)
 
     def edit(self, idx):
-        key = list(self.content)[int(idx)]
-        print(f"Editing -> {key} : {self.content[key]:.2f}")
+        key = list(self.data)[int(idx)]
+        print(f"Editing -> {key} : {self.data[key]:.2f}")
         if self.key_is_parent(key):
             exit("This is a parent enrty, editing this is not implemented yet...")
         else:
             try:
-                self.content[key] = float(input())
+                self.data[key] = float(input())
             except:
                 print("Please provide proper input")
             # TODO assert input is float
-            print(f"New value -> {key} : {self.content[key]:.2f}")
+            print(f"New value -> {key} : {self.data[key]:.2f}")
             self.write()
 
     def delete(self, idx):
-        key = list(self.content)[int(idx)]
-        if input(f"Deleting -> {key} : {self.content[key]:.2f} [y\\n]: ") == "y":
-            del self.content[key]
+        key = list(self.data)[int(idx)]
+        if input(f"Deleting -> {key} : {self.data[key]:.2f} [y\\n]: ") == "y":
+            del self.data[key]
             for p in self.parents():
-                if key in self.content[p]:
+                if key in self.data[p]:
                     logging.debug(f"Removing child from: {p}")
-                    self.content[p].remove(key)
+                    self.data[p].remove(key)
             self.write()
         else:
             exit("Aborted.")
@@ -87,7 +81,7 @@ class State:
         if not action:
             exit("Unexpected argument!")
         elif action == "quit":
-            exit("bye...")
+            exit("selametle...")
         logging.debug(f"You chose {action}.")
         match action:
             case "edit" | "delete":
@@ -111,49 +105,49 @@ class State:
         logging.debug("Verification done.")
 
     def key_is_parent(self, key) -> bool:
-        return isinstance(self.content[key], list)
+        return isinstance(self.data[key], list)
 
     def parents(self) -> list:
         if not hasattr(self, "parents_list"):
             logging.debug("Parent list have not been cached before, caching now.")
-            self.parents_list = [k for k in self.content if self.key_is_parent(k)]
+            self.parents_list = [k for k in self.data if self.key_is_parent(k)]
         return self.parents_list
 
     def children(self) -> list:
         if not hasattr(self, "children_list"):
             logging.debug("Children list have not been cached before, caching now.")
-            self.children_list = [k for k in self.content if not self.key_is_parent(k)]
+            self.children_list = [k for k in self.data if not self.key_is_parent(k)]
         return self.children_list
 
     def __str__(self):
         """Only the child items"""
         logging.debug("Listing the state file.")
         res = ""
-        max_width = max(map(len, self.content))
+        max_width = max(map(len, self.data))
         for i, key in enumerate(self.children()):
-            res += f"|{i:>2}| {key:<{max_width}} : {self.content[key]:>8.2f}\n"
+            res += f"|{i:>2}| {key:<{max_width}} : {self.data[key]:>8.2f}\n"
         return res[:-1]
 
 
 class Cetele:
     def __init__(self, state: State):
-        self.vals = state.content
+        self.data = state.data
 
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
-        v = self.vals[k]
+        v = self.data[k]
 
         if isinstance(v, list):
             logging.debug(f"\tCalc by summing {v}")
             sum = 0
             for c in v:
                 sum += self.calculate(c)
-            self.vals[k] = sum
+            self.data[k] = sum
             v = sum
 
         # if it is in TRY, convert to EUR before returning
         if k[-5:] == "[try]":
-            v /= self.vals["EUR2TRY"]
+            v /= self.data["EUR2TRY"]
 
         assert isinstance(v, float) or isinstance(v, int)
         return v
