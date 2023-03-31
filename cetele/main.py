@@ -52,11 +52,13 @@ class State:
     def delete(self, idx):
         idx = int(idx)
         if input(f"Deleting: {','.join(self.content[idx])} [y\\n]") == "y":
-            del self.content[idx]
+            # First check where this entry occurs as child
             for i, row in enumerate(self.content):
                 if len(row) > 2 and self.content[idx][0] in row:
+                    print(row)
                     logging.debug(f"Removing child from parent {self.content[i][0]}")
                     self.content[i].remove(self.content[idx][0])
+            del self.content[idx]
             self.write()
         else:
             exit("Aborted.")
