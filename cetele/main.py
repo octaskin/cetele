@@ -1,7 +1,6 @@
 import datetime
 import logging
 import json
-from csv import reader
 from pathlib import Path
 
 
@@ -12,7 +11,7 @@ class State:
 
     def __init__(self):
         config = self.read_config()
-        self.fpath = Path.home().joinpath(config["state_file_path"])
+        self.fpath = Path.home().joinpath(config["new_path"])
         self.pocket_str = config["pocket_money_string"]
         self.content = self.read()
 
@@ -25,11 +24,10 @@ class State:
         else:
             exit("Please define a path on the configuration file.")
 
-    def read(self) -> list:
+    def read(self) -> dict:
         logging.debug("Reading state file.")
         with open(self.fpath, "r") as file:
-            out = [r for r in reader(file, delimiter=",")]
-        return out
+            return json.load(file)
 
     def write(self):
         logging.debug("Writing to state file.")
@@ -124,16 +122,7 @@ class Cetele:
 
     def form_state(self) -> dict:
         logging.debug("Forming state dictionary.")
-        res = {}
-        for line in self.state.content:
-            k = line[0]
-            if State.row_is_child(line):
-                res[k] = float(line[1])
-            else:
-                res[k] = line[1:]
-            logging.debug(f"{k}->{res[k]}")
-
-        logging.debug(f"Calculating pocket money for entry {self.state.pocket_str}")
+        res = self.state.content
         res[self.state.pocket_str] = self.leftover_pocket_money()
         return res
 
@@ -167,7 +156,7 @@ class Cetele:
         if k[-5:] == "[try]":
             v /= self.vals["EUR2TRY"]
 
-        assert isinstance(v, float)
+        assert isinstance(v, float) or isinstance(v, int)
         return v
 
     def __str__(self) -> str:
