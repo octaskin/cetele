@@ -4,50 +4,67 @@ import json
 from pathlib import Path
 
 
+def last_day_of_month(any_day) -> datetime.date:
+    # credit: https://stackoverflow.com/a/13565185/13426912
+    # The day 28 exists in every month. 4 days later, it's always next month
+    next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
+    # subtracting the number of the current day brings us back one month
+    return next_month - datetime.timedelta(days=next_month.day)
+
+
+def leftover_pocket_money() -> float:
+    today = datetime.date.today()
+    days_left = last_day_of_month(today) - today
+    return days_left.days * 15.00
+
+
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
     # TODO: update these to the new features that are added
     edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
 
     def __init__(self):
-        config = self.read_config()
-        self.fpath = Path.home().joinpath(config["new_path"])
-        self.pocket_str = config["pocket_money_string"]
-        self.content = self.read()
+        self.read_config()
+        self.read()
 
-    def read_config(self) -> dict:
+    def read_config(self):
         logging.debug("Reading config file.")
         config_file = Path.home().joinpath(".config/cetele/config.json")
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
-                return json.load(file)
+                self.config = json.load(file)
+            self.fpath = Path.home().joinpath(self.config["new_path"])
         else:
             exit("Please define a path on the configuration file.")
 
-    def read(self) -> dict:
+    def read(self):
         logging.debug("Reading state file.")
         with open(self.fpath, "r") as file:
-            return json.load(file)
+            self.content = json.load(file)
+        self.content[self.config["pocket_money_str"]] = leftover_pocket_money()
 
     def write(self):
         logging.debug("Writing to state file.")
-        res = ""
-        for row in self.content:
-            res += ",".join(row) + "\n"
-        with open(self.fpath, "w") as file:
-            file.write(res)
+        with open(self.fpath.with_stem("output"), "w") as file:
+            json.dump(self.content, file, indent=2)
 
     def edit(self, idx):
-        idx = int(idx)
-        print(f"Editing: {','.join(self.content[idx])}")
-        if len(self.content[idx][1:]) > 1:
+        key = list(self.content)[int(idx)]
+        print(f"Editing -> {key} : {self.content[key]:.2f}")
+        if self.is_parent(key):
             exit("This is a parent enrty, editing this is not implemented yet...")
         else:
-            self.content[idx][1] = f"{float(input()):.2f}"
-            print(f"New value: {','.join(self.content[idx])}")
-        self.write()
+            try:
+                self.content[key] = float(input())
+            except:
+                print("Please provide proper input")
+            # TODO assert input is float
+            print(f"New value -> {key} : {self.content[key]:.2f}")
+            self.write()
 
     def delete(self, idx):
+        print("Temporarily disabled for json")
+        return
         idx = int(idx)
         if input(f"Deleting: {','.join(self.content[idx])} [y\\n]") == "y":
             # First check where this entry occurs as child
@@ -57,11 +74,13 @@ class State:
                     logging.debug(f"Removing child from parent {self.content[i][0]}")
                     self.content[i].remove(self.content[idx][0])
             del self.content[idx]
-            self.write()
+            # self.write()
         else:
             exit("Aborted.")
 
     def interactive(self):
+        print("Temporarily disabled for json")
+        return
         logging.debug("Editing state file.")
         print(self)
         action = self.edit_actions.get(input(self.edit_prompt).capitalize(), None)
@@ -76,9 +95,11 @@ class State:
                 getattr(self, action)(idx)
             case "verify":
                 self.verify()
-        self.write()
+        # self.write()
 
     def verify(self):
+        print("Temporarily disabled for json")
+        return
         flag = True
         logging.debug("Verifying state file.")
         # Currently unused
@@ -97,21 +118,18 @@ class State:
             print("No problems have been encountered!")
         logging.debug("Verification done.")
 
-    @staticmethod
-    def row_is_child(row: list[str]) -> bool:
-        try:
-            float(row[1])
-            return True
-        except:
-            return False
+    def is_parent(self, key) -> bool:
+        return isinstance(self.content[key], list)
 
     def __str__(self):
+        """Only the child items"""
         logging.debug("Listing the state file.")
         res = ""
-        for i, row in enumerate(self.content):
-            if not self.row_is_child(row):
+        max_width = max(map(len, self.content))
+        for i, key in enumerate(self.content):
+            if self.is_parent(key):
                 continue
-            res += f"{i}: {','.join(row)}\n"
+            res += f"|{i:>2}| {key:<{max_width}} : {self.content[key]:>8.2f}\n"
         return res[:-1]
 
 
@@ -123,22 +141,7 @@ class Cetele:
     def form_state(self) -> dict:
         logging.debug("Forming state dictionary.")
         res = self.state.content
-        res[self.state.pocket_str] = self.leftover_pocket_money()
         return res
-
-    @staticmethod
-    def last_day_of_month(any_day) -> datetime.date:
-        # credit: https://stackoverflow.com/a/13565185/13426912
-        # The day 28 exists in every month. 4 days later, it's always next month
-        next_month = any_day.replace(day=28) + datetime.timedelta(days=4)
-        # subtracting the number of the current day brings us back one month
-        return next_month - datetime.timedelta(days=next_month.day)
-
-    @staticmethod
-    def leftover_pocket_money() -> float:
-        today = datetime.date.today()
-        days_left = Cetele.last_day_of_month(today) - today
-        return days_left.days * 15.00
 
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
