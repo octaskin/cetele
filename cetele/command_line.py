@@ -34,14 +34,7 @@ def main(args=sys.argv):
             cetele = Cetele(state)
             print(cetele)
         case "edit" | "delete":
-            if len(args) == 2:
-                print(f"You need to pick an entry to work on!\n{state}")
-                main(args + [input("Choice: ")])
-            else:
-                assert len(args) == 3
-                getattr(state, args[1])(args[2])
-        case "interactive":
-            state.interactive()
+            getattr(state, args[1])()
         case "list":
             print(state)
         case "verify":

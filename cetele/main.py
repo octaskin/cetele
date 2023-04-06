@@ -2,6 +2,7 @@ import datetime
 import logging
 import json
 from pathlib import Path
+from pyfzf.pyfzf import FzfPrompt
 
 
 def last_day_of_month(any_day) -> datetime.date:
@@ -21,6 +22,7 @@ def leftover_pocket_money() -> float:
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
     edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
+    config_dir = Path.home().joinpath(".config/cetele")
 
     def __init__(self):
         self.read_config()
@@ -28,7 +30,7 @@ class State:
 
     def read_config(self):
         logging.debug("Reading config file.")
-        config_file = Path.home().joinpath(".config/cetele/config.json")
+        config_file = self.config_dir.joinpath("config.json")
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
                 self.config = json.load(file)
@@ -47,8 +49,16 @@ class State:
         with open(self.fpath, "w") as file:
             json.dump(self.data, file, indent=2)
 
-    def edit(self, idx):
-        key = list(self.data)[int(idx)]
+    def prompt(self):
+        fzf_return = FzfPrompt().prompt([f"{k}:{v}" for k, v in self.data.items()])
+        logging.debug(f"fzf returned {fzf_return}")
+        if not fzf_return:
+            exit("Fzf returned nothing!")
+        else:
+            return fzf_return[0].split(":")[0]
+
+    def edit(self):
+        key = self.prompt()
         print(f"Editing -> {key} : {self.data[key]:.2f}")
         if self.key_is_parent(key):
             exit("This is a parent enrty, editing this is not implemented yet...")
@@ -62,7 +72,7 @@ class State:
             self.write()
 
     def delete(self, idx):
-        key = list(self.data)[int(idx)]
+        key = self.prompt()
         if input(f"Deleting -> {key} : {self.data[key]:.2f} [y\\n]: ") == "y":
             del self.data[key]
             for p in self.parents():
@@ -73,27 +83,10 @@ class State:
         else:
             exit("Aborted.")
 
-    def interactive(self):
-        logging.debug("Editing state file.")
-        print(self)
-        action = self.edit_actions.get(input(self.edit_prompt).capitalize(), None)
-        if not action:
-            exit("Unexpected argument!")
-        elif action == "quit":
-            exit("selametle...")
-        logging.debug(f"You chose {action}.")
-        match action:
-            case "edit" | "delete":
-                idx = int(input(f"Which entry you want to {action}: "))
-                getattr(self, action)(idx)
-            case "verify":
-                self.verify()
-        self.write()
-
     def verify(self):
         flag = True
         logging.debug("Verifying state file.")
-        all_children = [i for p in self.parents() for i in p]
+        all_children = [i for p in self.parents() for i in self.data[p]]
         for k in self.children():
             if k not in all_children + ["EUR2TRY"]:  # currency is an exception
                 print(f"{k} is an orphan, please review or remove!")
