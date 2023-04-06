@@ -20,8 +20,6 @@ def leftover_pocket_money() -> float:
 
 
 class State:
-    edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
-    edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
     config_dir = Path.home().joinpath(".config/cetele")
 
     def __init__(self):
