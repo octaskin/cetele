@@ -50,7 +50,9 @@ class State:
             json.dump(self.data, file, indent=2)
 
     def prompt(self):
-        fzf_return = FzfPrompt().prompt([f"{k}:{v}" for k, v in self.data.items()])
+        fzf_return = FzfPrompt().prompt(
+            [f"{k}:{self.data[k]}" for k in self.children()]
+        )
         logging.debug(f"fzf returned {fzf_return}")
         if not fzf_return:
             exit("Fzf returned nothing!")
