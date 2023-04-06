@@ -20,7 +20,6 @@ def leftover_pocket_money() -> float:
 
 class State:
     edit_actions = {"E": "edit", "D": "delete", "Q": "quit"}
-    # TODO: update these to the new features that are added
     edit_prompt = "You want to [E]dit or [D]elete an entry, Q[uit]?: "
 
     def __init__(self):
@@ -131,23 +130,23 @@ class State:
 
 class Cetele:
     def __init__(self, state: State):
-        self.data = state.data
+        self.state = state
 
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
-        v = self.data[k]
+        v = self.state.data[k]
 
         if isinstance(v, list):
             logging.debug(f"\tCalc by summing {v}")
             sum = 0
             for c in v:
                 sum += self.calculate(c)
-            self.data[k] = sum
+            self.state.data[k] = sum
             v = sum
 
         # if it is in TRY, convert to EUR before returning
         if k[-5:] == "[try]":
-            v /= self.data["EUR2TRY"]
+            v /= self.state.data["EUR2TRY"]
 
         assert isinstance(v, float) or isinstance(v, int)
         return v

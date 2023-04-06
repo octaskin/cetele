@@ -25,8 +25,8 @@ def parse_args(args: list) -> list:
 
 
 def main(args=sys.argv):
-    logging.debug(f"Received args {args}")
     args = parse_args(args)
+    logging.debug(f"Received args from shell {args}")
     state = State()
 
     match args[1]:
