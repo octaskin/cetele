@@ -71,7 +71,7 @@ class State:
             print(f"New value -> {key} : {self.data[key]:.2f}")
             self.write()
 
-    def delete(self, idx):
+    def delete(self):
         key = self.prompt()
         if input(f"Deleting -> {key} : {self.data[key]:.2f} [y\\n]: ") == "y":
             del self.data[key]
