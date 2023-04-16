@@ -10,6 +10,7 @@ short_cmds = {
     "i": "interactive",
     "ls": "list",
     "v": "verify",
+    "q": "query",
 }
 
 
@@ -39,5 +40,7 @@ def main(args=sys.argv):
             print(state)
         case "verify":
             state.verify()
+        case "query":
+            Cetele(state).query_value()
         case _:
             exit("Unexpected argument!")

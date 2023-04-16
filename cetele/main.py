@@ -144,6 +144,10 @@ class Cetele:
         assert isinstance(v, float) or isinstance(v, int)
         return v
 
+    def query_value(self):
+        fzf_return = FzfPrompt().prompt(self.state.data.keys())[0]
+        print(f"{fzf_return} : {self.calculate(fzf_return):.2f}")
+
     def __str__(self) -> str:
         logging.debug("Printing the cetele table")
         cols = ["cetele", "savings", "flex", "dailies"]
