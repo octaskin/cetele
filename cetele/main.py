@@ -32,7 +32,11 @@ class State:
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
                 self.config = json.load(file)
-            self.fpath = Path.home().joinpath(self.config["cetele_path"])
+            self.fpath = (
+                Path.home()
+                .joinpath(self.config["cetele_path"])
+                .with_stem("cetele-copy")
+            )
         else:
             exit("Please define a path on the configuration file.")
 
@@ -128,6 +132,7 @@ class Cetele:
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
         v = self.state.data[k]
+        print(v)
 
         if isinstance(v, list):
             logging.debug(f"\tCalc by summing {v}")
