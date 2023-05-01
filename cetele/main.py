@@ -65,7 +65,7 @@ class State:
         else:
             try:
                 self.data[key] = float(input())
-            except:
+            except ValueError:
                 print("Please provide proper input")
             # TODO assert input is float
             print(f"New value -> {key} : {self.data[key]:.2f}")
@@ -184,7 +184,10 @@ class Cetele:
                     + line
                 )
             else:
-                msg += f"| {row[0]:<8} | {row[1]:>8.2f} | {row[2]:>8.2f} | {row[3]:>8.2f} |\n"
+                msg += (
+                    f"| {row[0]:<8} | {row[1]:>8.2f} | {row[2]:>8.2f} "
+                    f"| {row[3]:>8.2f} |\n"
+                )
 
                 overall += row[3]
 

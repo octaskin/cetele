@@ -1,5 +1,6 @@
 import sys
 import logging
+import os
 
 from .main import State, Cetele
 
@@ -42,5 +43,7 @@ def main(args=sys.argv):
             state.verify()
         case "query":
             Cetele(state).query_value()
+        case "edit-raw":
+            os.system(f"$EDITOR {state.fpath}")
         case _:
             exit("Unexpected argument!")
