@@ -19,12 +19,36 @@ def leftover_pocket_money() -> float:
     return days_left.days * 15.00
 
 
+def expand_keys(inp: dict):
+    for k, v in inp.items():
+        if isinstance(v, dict):
+            return [f"{k}/{i}" for i in expand_keys(v)]
+        else:
+            return k
+
+
 class State:
     config_dir = Path.home().joinpath(".config/cetele")
 
     def __init__(self):
         self.read_config()
         self.read()
+        a = expand_keys(self.data)
+        print(a)
+        exit()
+        # self.explore_keys()
+
+    def explore_keys(self, parent=None):
+        if not parent:
+            parent = "overall"
+        # separate baed on / then recurse into the dicts
+        for k, v in self.data[parent].items():
+            print(f"{k}->{v}")
+            print(type(v))
+            if isinstance(v, dict):
+                return [f"{v}/{i}" for i in self.explore_keys(parent=f"{parent}/{k}")]
+            else:
+                return f"{v}/{k}"
 
     def read_config(self):
         logging.debug("Reading config file.")
