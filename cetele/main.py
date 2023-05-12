@@ -19,12 +19,15 @@ def leftover_pocket_money() -> float:
     return days_left.days * 15.00
 
 
-def expand_keys(inp: dict):
+def create_addressbook(inp: dict):
+    print(f"Called create_adressbook for {inp}")
+    result = []
     for k, v in inp.items():
         if isinstance(v, dict):
-            return [f"{k}/{i}" for i in expand_keys(v)]
+            result += [f"{k}/{i}" for i in create_addressbook(v)]
         else:
-            return k
+            result += [k]
+    return result
 
 
 class State:
@@ -33,22 +36,17 @@ class State:
     def __init__(self):
         self.read_config()
         self.read()
-        a = expand_keys(self.data)
+        self.abook = {}
+        a = create_addressbook(self.data)
+        for k in a:
+            self.abook[k.split("/")[-1]] = k
+        self.data[self.abook[self.config["pocket_money_str"]]] = leftover_pocket_money()
+        print(self.get_child("gbit-pending"))
+        self.set_child("gbit-pending",5)
+        print(self.get_child("gbit-pending"))
+        a = self.prompt()
         print(a)
         exit()
-        # self.explore_keys()
-
-    def explore_keys(self, parent=None):
-        if not parent:
-            parent = "overall"
-        # separate baed on / then recurse into the dicts
-        for k, v in self.data[parent].items():
-            print(f"{k}->{v}")
-            print(type(v))
-            if isinstance(v, dict):
-                return [f"{v}/{i}" for i in self.explore_keys(parent=f"{parent}/{k}")]
-            else:
-                return f"{v}/{k}"
 
     def read_config(self):
         logging.debug("Reading config file.")
@@ -68,7 +66,6 @@ class State:
         logging.debug("Reading state file.")
         with open(self.fpath, "r") as file:
             self.data = json.load(file)
-        self.data[self.config["pocket_money_str"]] = leftover_pocket_money()
 
     def write(self):
         logging.debug("Writing to state file.")
@@ -77,7 +74,7 @@ class State:
 
     def prompt(self):
         fzf_return = FzfPrompt().prompt(
-            [f"{k}:{self.data[k]}" for k in self.children()]
+            [f"{k}:{self.get_child(k)}" for k in self.children()]
         )
         logging.debug(f"fzf returned {fzf_return}")
         if not fzf_return:
@@ -125,7 +122,7 @@ class State:
         logging.debug("Verification done.")
 
     def key_is_parent(self, key) -> bool:
-        return isinstance(self.data[key], list)
+        return isinstance(self.data[key], dict)
 
     def parents(self) -> list:
         if not hasattr(self, "parents_list"):
@@ -134,10 +131,24 @@ class State:
         return self.parents_list
 
     def children(self) -> list:
-        if not hasattr(self, "children_list"):
-            logging.debug("Children list have not been cached before, caching now.")
-            self.children_list = [k for k in self.data if not self.key_is_parent(k)]
-        return self.children_list
+        # if not hasattr(self, "children_list"):
+        #     logging.debug("Children list have not been cached before, caching now.")
+        #     # self.children_list = [k for k in self.data if not self.key_is_parent(k)]
+        #     self.children_list = [k for k in self.data if not self.key_is_parent(k)]
+        return list(self.abook.keys())
+
+    def get_child(self,chi) -> int:
+        dict = self.data
+        for k in self.abook[chi].split("/"):
+            dict = dict[k]
+        return dict 
+
+    def set_child(self, chi, val):
+        dict = self.data
+        keys = self.abook[chi].split("/")
+        for k in keys[:-1]:
+            dict = dict[k]
+        dict[keys[-1]] = val
 
     def __str__(self):
         """Only the child items"""
