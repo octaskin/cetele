@@ -2,7 +2,7 @@ import sys
 import logging
 import os
 
-from .main import State, Cetele
+from .main import Cetele
 
 short_cmds = {
     "s": "show",
@@ -10,7 +10,6 @@ short_cmds = {
     "rm": "delete",
     "i": "interactive",
     "ls": "list",
-    "v": "verify",
     "q": "query",
 }
 
@@ -29,21 +28,18 @@ def parse_args(args: list) -> list:
 def main(args=sys.argv):
     args = parse_args(args)
     logging.debug(f"Received args from shell {args}")
-    state = State()
+    cetele = Cetele()
 
     match args[1]:
         case "show":
-            cetele = Cetele(state)
             print(cetele)
         case "edit" | "delete":
-            getattr(state, args[1])()
+            getattr(cetele, args[1])()
         case "list":
-            print(state)
-        case "verify":
-            state.verify()
+            cetele.list_children()
         case "query":
-            Cetele(state).query_value()
+            cetele.query()
         case "edit-raw":
-            os.system(f"$EDITOR {state.fpath}")
+            os.system(f"$EDITOR {cetele.fpath}")
         case _:
             exit("Unexpected argument!")

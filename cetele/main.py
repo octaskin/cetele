@@ -19,34 +19,23 @@ def leftover_pocket_money() -> float:
     return days_left.days * 15.00
 
 
-def create_addressbook(inp: dict):
-    print(f"Called create_adressbook for {inp}")
+def flatten_keys(inp: dict):
     result = []
     for k, v in inp.items():
+        result += [k]
         if isinstance(v, dict):
-            result += [f"{k}/{i}" for i in create_addressbook(v)]
-        else:
-            result += [k]
+            result += [f"{k}/{i}" for i in flatten_keys(v)]
     return result
 
 
-class State:
+class Cetele:
     config_dir = Path.home().joinpath(".config/cetele")
 
     def __init__(self):
         self.read_config()
         self.read()
-        self.abook = {}
-        a = create_addressbook(self.data)
-        for k in a:
-            self.abook[k.split("/")[-1]] = k
-        self.data[self.abook[self.config["pocket_money_str"]]] = leftover_pocket_money()
-        print(self.get_child("gbit-pending"))
-        self.set_child("gbit-pending",5)
-        print(self.get_child("gbit-pending"))
-        a = self.prompt()
-        print(a)
-        exit()
+        self.create_addresbook()
+        self.update_pocket_money()
 
     def read_config(self):
         logging.debug("Reading config file.")
@@ -54,11 +43,7 @@ class State:
         if config_file.exists():
             with open(config_file, "r", encoding="utf-8") as file:
                 self.config = json.load(file)
-            self.fpath = (
-                Path.home()
-                .joinpath(self.config["cetele_path"])
-                .with_stem("cetele-copy")
-            )
+            self.fpath = Path.home().joinpath(self.config["cetele_path"])
         else:
             exit("Please define a path on the configuration file.")
 
@@ -72,121 +57,120 @@ class State:
         with open(self.fpath, "w") as file:
             json.dump(self.data, file, indent=2)
 
-    def prompt(self):
-        fzf_return = FzfPrompt().prompt(
-            [f"{k}:{self.get_child(k)}" for k in self.children()]
-        )
-        logging.debug(f"fzf returned {fzf_return}")
-        if not fzf_return:
-            exit("Fzf returned nothing!")
-        else:
-            return fzf_return[0].split(":")[0]
+    def create_addresbook(self):
+        self.abook = {}
+        for k in flatten_keys(self.data):
+            self.abook[k.split("/")[-1]] = k
 
-    def edit(self):
-        key = self.prompt()
-        print(f"Editing -> {key} : {self.data[key]:.2f}")
-        if self.key_is_parent(key):
-            exit("This is a parent enrty, editing this is not implemented yet...")
-        else:
-            try:
-                self.data[key] = float(input())
-            except ValueError:
-                print("Please provide proper input")
-            # TODO assert input is float
-            print(f"New value -> {key} : {self.data[key]:.2f}")
-            self.write()
+    def update_pocket_money(self):
+        self.set(self.config["pocket_money_str"], leftover_pocket_money())
+        self.write()
 
-    def delete(self):
-        key = self.prompt()
-        if input(f"Deleting -> {key} : {self.data[key]:.2f} [y\\n]: ") == "y":
-            del self.data[key]
-            for p in self.parents():
-                if key in self.data[p]:
-                    logging.debug(f"Removing child from: {p}")
-                    self.data[p].remove(key)
-            self.write()
-        else:
-            exit("Aborted.")
+    def get(self, chi) -> int | float | dict:
+        v = self.data
+        for k in self.abook[chi].split("/"):
+            v = v[k]
+        return v
 
-    def verify(self):
-        flag = True
-        logging.debug("Verifying state file.")
-        all_children = [i for p in self.parents() for i in self.data[p]]
-        for k in self.children():
-            if k not in all_children + ["EUR2TRY"]:  # currency is an exception
-                print(f"{k} is an orphan, please review or remove!")
-                flag = False
-
-        if flag:
-            print("No problems have been encountered!")
-        logging.debug("Verification done.")
+    def set(self, chi, val):
+        d = self.data
+        keys = self.abook[chi].split("/")
+        for k in keys[:-1]:
+            d = d[k]
+        d[keys[-1]] = val
 
     def key_is_parent(self, key) -> bool:
-        return isinstance(self.data[key], dict)
+        return isinstance(self.get(key), dict)
 
     def parents(self) -> list:
         if not hasattr(self, "parents_list"):
             logging.debug("Parent list have not been cached before, caching now.")
-            self.parents_list = [k for k in self.data if self.key_is_parent(k)]
+            self.parents_list = [k for k in self.abook.keys() if self.key_is_parent(k)]
         return self.parents_list
 
     def children(self) -> list:
-        # if not hasattr(self, "children_list"):
-        #     logging.debug("Children list have not been cached before, caching now.")
-        #     # self.children_list = [k for k in self.data if not self.key_is_parent(k)]
-        #     self.children_list = [k for k in self.data if not self.key_is_parent(k)]
-        return list(self.abook.keys())
+        if not hasattr(self, "children_list"):
+            logging.debug("Children list have not been cached before, caching now.")
+            self.children_list = [
+                k for k in self.abook.keys() if not self.key_is_parent(k)
+            ]
+        return self.children_list
 
-    def get_child(self,chi) -> int:
-        dict = self.data
-        for k in self.abook[chi].split("/"):
-            dict = dict[k]
-        return dict 
+    def prompt(self, prompt_list=None):
+        if not prompt_list:
+            prompt_list = self.children()
+        fzf_return = FzfPrompt().prompt(prompt_list)[0]
+        logging.debug(f"fzf returned {fzf_return}")
+        if not fzf_return:
+            exit("Fzf returned nothing!")
+        else:
+            return fzf_return
 
-    def set_child(self, chi, val):
-        dict = self.data
-        keys = self.abook[chi].split("/")
-        for k in keys[:-1]:
-            dict = dict[k]
-        dict[keys[-1]] = val
+    def query(self):
+        fzf_return = self.prompt(self.children() + self.parents())
+        print(f"{fzf_return} : {self.calculate(fzf_return):.2f}")
 
-    def __str__(self):
-        """Only the child items"""
-        logging.debug("Listing the state file.")
-        res = ""
-        max_width = max(map(len, self.data))
-        for i, key in enumerate(self.children()):
-            res += f"|{i:>2}| {key:<{max_width}} : {self.data[key]:>8.2f}\n"
-        return res[:-1]
+    def edit(self):
+        key = self.prompt()
+        print(f"Editing -> {key} : {self.get(key):.2f}")
+        if self.key_is_parent(key):
+            exit("This is a parent enrty, editing this is not implemented yet...")
+        else:
+            try:
+                self.set(key, float(input()))
+            except ValueError:
+                print("Please provide proper input")
+            # TODO assert input is float
+            print(f"New value -> {key} : {self.get(key):.2f}")
+            self.write()
 
-
-class Cetele:
-    def __init__(self, state: State):
-        self.state = state
+    def delete(self):
+        key = self.prompt()
+        if input(f"Deleting -> {key} : {self.get(key):.2f} [y\\n]: ") == "y":
+            d = self.data
+            keys = self.abook[key].split("/")
+            for k in keys[:-1]:
+                d = d[k]
+            del d[keys[-1]]
+            self.write()
+        else:
+            exit("Aborted.")
 
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
-        v = self.state.data[k]
-        print(v)
 
-        if isinstance(v, list):
+        if self.key_is_parent(k):
+            v = self.get(k)
+            assert isinstance(v, dict)
             logging.debug(f"\tCalc by summing {v}")
             sum = 0
             for c in v:
                 sum += self.calculate(c)
-            self.state.data[k] = sum
             v = sum
-
-        # if it is in TRY, convert to EUR before returning
-        if k[-5:] == "[try]":
-            v /= self.state.data["EUR2TRY"]
+        else:
+            v = self.get(k)
 
         assert isinstance(v, float) or isinstance(v, int)
+
+        # if it is in TRY, convert to EUR before returning
+        if "[try]" in k:
+            v /= self.get("EUR2TRY")  # pyright: ignore , we asserted already
+            k = k.replace("[try]", "")
+
+        if "[-]" in k:
+            v *= -1
+            k = k.replace("[-]", "")
+
         return v
 
-    def query_value(self):
-        fzf_return = FzfPrompt().prompt(self.state.data.keys())[0]
-        print(f"{fzf_return} : {self.calculate(fzf_return):.2f}")
+    def list_children(self):
+        """Only the child items"""
+        logging.debug("Listing the state file.")
+        res = ""
+        max_width = max(map(len, self.children()))
+        for i, key in enumerate(self.children()):
+            res += f"|{i:>2}| {key:<{max_width}} : {self.get(key):>8.2f}\n"
+        print(res[:-1])
 
     def __str__(self) -> str:
         logging.debug("Printing the cetele table")
