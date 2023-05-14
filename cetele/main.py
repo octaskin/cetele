@@ -99,12 +99,12 @@ class Cetele:
     def prompt(self, prompt_list=None):
         if not prompt_list:
             prompt_list = self.children()
-        fzf_return = FzfPrompt().prompt(prompt_list)[0]
+        fzf_return = FzfPrompt().prompt(prompt_list)
         logging.debug(f"fzf returned {fzf_return}")
         if not fzf_return:
             exit("Fzf returned nothing!")
         else:
-            return fzf_return
+            return fzf_return[0]
 
     def query(self):
         fzf_return = self.prompt(self.children() + self.parents())
