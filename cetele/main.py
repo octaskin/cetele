@@ -3,6 +3,7 @@ import logging
 import json
 from pathlib import Path
 from pyfzf.pyfzf import FzfPrompt
+from termcolor import colored
 
 
 def last_day_of_month(any_day) -> datetime.date:
@@ -204,19 +205,28 @@ class Cetele:
         for row in table:
             if row[0] == "cetele":
                 msg += (
-                    f"| {row[0]:<8} | {row[1]:>8} | {row[2]:>8} | {row[3]:>8} |\n"
-                    + line
+                    f"| {colored(f'{row[0]:<8}', 'cyan')} "
+                    f"| {colored(f'{row[1]:>8}','cyan')} "
+                    f"| {colored(f'{row[2]:>8}','cyan')} "
+                    f"| {colored(f'{row[3]:>8}','cyan')} |\n" + line
                 )
             else:
+                color = "green"
+                if row[3] < 0:
+                    color = "red"
                 msg += (
-                    f"| {row[0]:<8} | {row[1]:>8.2f} | {row[2]:>8.2f} "
-                    f"| {row[3]:>8.2f} |\n"
+                    f"| {colored(f'{row[0]:<8}','yellow')} | {row[1]:>8.2f} | {row[2]:>8.2f} "
+                    f"| {colored(f'{row[3]:>8.2f}', color)} |\n"
                 )
 
                 overall += row[3]
 
         msg += line
-        msg += f"| {'overall':<8} | {'':<8} | {'':<8} | {overall:>8.2f} |\n"
+        titel = "overall"
+        color = "green"
+        if overall < 0:
+            color = "red"
+        msg += f"| {colored(f'{titel:<8}','cyan')} | {'':<8} | {'':<8} | {colored(f'{overall:>8.2f}', color)} |\n"
         msg += line
 
         return msg[:-1]

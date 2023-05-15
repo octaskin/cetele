@@ -8,7 +8,5 @@ setup(
     author="C. Taskin",
     author_email="orhuncenktaskin@gmail.com",
     entry_points={"console_scripts": ["cetele=cetele.command_line:main"]},
-    install_requires=[
-        "pyfzf",
-    ],
+    install_requires=["pyfzf", "termcolor"],
 )
