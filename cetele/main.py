@@ -200,33 +200,41 @@ class Cetele:
             table.append(col)
 
         overall = 0
-        line = "-" * 45 + "\n"
-        msg = line
+        hline = colored("-" * 45, "light_grey") + "\n"
+        vline = colored("|", "light_grey")
+        msg = hline
         for row in table:
             if row[0] == "cetele":
                 msg += (
-                    f"| {colored(f'{row[0]:<8}', 'cyan')} "
-                    f"| {colored(f'{row[1]:>8}','cyan')} "
-                    f"| {colored(f'{row[2]:>8}','cyan')} "
-                    f"| {colored(f'{row[3]:>8}','cyan')} |\n" + line
+                    f"{vline} {colored(f'{row[0]:<8}', 'cyan')} "
+                    f"{vline} {colored(f'{row[1]:>8}','cyan')} "
+                    f"{vline} {colored(f'{row[2]:>8}','cyan')} "
+                    f"{vline} {colored(f'{row[3]:>8}','cyan')} {vline}\n" + hline
                 )
             else:
                 color = "green"
                 if row[3] < 0:
                     color = "red"
                 msg += (
-                    f"| {colored(f'{row[0]:<8}','yellow')} | {row[1]:>8.2f} | {row[2]:>8.2f} "
-                    f"| {colored(f'{row[3]:>8.2f}', color)} |\n"
+                    f"{vline} {colored(f'{row[0]:<8}','yellow')} "
+                    f"{vline} {row[1]:>8.2f} "
+                    f"{vline} {row[2]:>8.2f} "
+                    f"{vline} {colored(f'{row[3]:>8.2f}', color)} {vline}\n"
                 )
 
                 overall += row[3]
 
-        msg += line
+        msg += hline
         titel = "overall"
         color = "green"
         if overall < 0:
             color = "red"
-        msg += f"| {colored(f'{titel:<8}','cyan')} | {'':<8} | {'':<8} | {colored(f'{overall:>8.2f}', color)} |\n"
-        msg += line
+        msg += (
+            f"{vline} {colored(f'{titel:<8}','cyan')} "
+            f"{vline} {'':<8} "
+            f"{vline} {'':<8} "
+            f"{vline} {colored(f'{overall:>8.2f}', color)} {vline}\n"
+        )
+        msg += hline
 
         return msg[:-1]
