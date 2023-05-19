@@ -217,8 +217,8 @@ class Cetele:
                     color = "red"
                 msg += (
                     f"{vline} {colored(f'{row[0]:<8}','yellow')} "
-                    f"{vline} {row[1]:>8.2f} "
-                    f"{vline} {row[2]:>8.2f} "
+                    f"{vline} {colored(f'{row[1]:>8.2f}', 'light_grey')} "
+                    f"{vline} {colored(f'{row[2]:>8.2f}', 'light_grey')} "
                     f"{vline} {colored(f'{row[3]:>8.2f}', color)} {vline}\n"
                 )
 
