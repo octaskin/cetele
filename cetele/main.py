@@ -137,6 +137,21 @@ class Cetele:
         else:
             exit("Aborted.")
 
+    def transfer(self):
+        # TODO: newly implemented, quite dirty
+        key_src = self.prompt()
+        key_dst = self.prompt()
+        print(f"Transfering {key_src}->{key_dst}. How much?")
+        try:
+            val = float(input())
+        except ValueError:
+            exit("Please provide proper input!")
+        self.set(key_src, self.get(key_src) - val)
+        self.set(key_dst, self.get(key_dst) + val)
+        print(f"New value -> {key_src} : {self.get(key_src):.2f}")
+        print(f"New value -> {key_dst} : {self.get(key_dst):.2f}")
+        self.write()
+
     def calculate(self, k: str) -> float:
         logging.debug(f'Querying value of "{k}"')
 

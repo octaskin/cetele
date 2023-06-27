@@ -11,6 +11,7 @@ short_cmds = {
     "i": "interactive",
     "ls": "list",
     "q": "query",
+    "t": "transfer",
 }
 
 
@@ -41,5 +42,7 @@ def main(args=sys.argv):
             cetele.query()
         case "edit-raw":
             os.system(f"$EDITOR {cetele.fpath}")
+        case "transfer":
+            cetele.transfer()
         case _:
             exit("Unexpected argument!")
