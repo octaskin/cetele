@@ -1,9 +1,10 @@
 import datetime
-import logging
 import json
+import logging
 from pathlib import Path
-from pyfzf.pyfzf import FzfPrompt
-from termcolor import colored
+
+from pyfzf.pyfzf import FzfPrompt  # type: ignore
+from termcolor import colored  # type: ignore
 
 
 def last_day_of_month(any_day) -> datetime.date:
@@ -85,13 +86,19 @@ class Cetele:
 
     def parents(self) -> list:
         if not hasattr(self, "parents_list"):
-            logging.debug("Parent list have not been cached before, caching now.")
-            self.parents_list = [k for k in self.abook.keys() if self.key_is_parent(k)]
+            logging.debug(
+                "Parent list have not been cached before, caching now."
+            )
+            self.parents_list = [
+                k for k in self.abook.keys() if self.key_is_parent(k)
+            ]
         return self.parents_list
 
     def children(self) -> list:
         if not hasattr(self, "children_list"):
-            logging.debug("Children list have not been cached before, caching now.")
+            logging.debug(
+                "Children list have not been cached before, caching now."
+            )
             self.children_list = [
                 k for k in self.abook.keys() if not self.key_is_parent(k)
             ]
@@ -115,7 +122,7 @@ class Cetele:
         key = self.prompt()
         print(f"Editing -> {key} : {self.get(key):.2f}")
         if self.key_is_parent(key):
-            exit("This is a parent enrty, editing this is not implemented yet...")
+            exit("Editing a parent entry is not implemented yet")
         else:
             try:
                 self.set(key, float(input()))
@@ -170,7 +177,7 @@ class Cetele:
 
         # if it is in TRY, convert to EUR before returning
         if "[try]" in k:
-            v /= self.get("EUR2TRY")  # pyright: ignore , we asserted already
+            v /= self.get("EUR2TRY")
             k = k.replace("[try]", "")
 
         if "[-]" in k:
@@ -224,7 +231,8 @@ class Cetele:
                     f"{vline} {colored(f'{row[0]:<8}', 'cyan')} "
                     f"{vline} {colored(f'{row[1]:>8}','cyan')} "
                     f"{vline} {colored(f'{row[2]:>8}','cyan')} "
-                    f"{vline} {colored(f'{row[3]:>8}','cyan')} {vline}\n" + hline
+                    f"{vline} {colored(f'{row[3]:>8}','cyan')} {vline}\n"
+                    + hline
                 )
             else:
                 color = "green"
